@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Conversion & Outcome Report - AcxiomCRM{% endblock %}
+{% block page_heading %}Lead Conversion & Deal Outcomes{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Conversion & Deal Outcome Report</h4>
+    <p class="text-muted small mb-0">Track prospect conversion effectiveness, sales velocity, and closed deal win rates.</p>
+  </div>
+  <div>
+    <a href="{% url 'report_center' %}" class="btn btn-outline-secondary btn-sm me-2">
+      <i class="bi bi-arrow-left me-1"></i> Report Center
+    </a>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+      <i class="bi bi-printer me-1"></i> Print
+    </button>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Lead Conversion Section -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-funnel-fill text-primary me-2"></i>Lead Qualification & Conversion</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="small text-muted text-uppercase fw-semibold">Total Leads</div>
+              <div class="fs-3 fw-bold text-dark">{{ total_leads }}</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="small text-muted text-uppercase fw-semibold">Conversion Rate</div>
+              <div class="fs-3 fw-bold text-success">{{ lead_conv_rate }}%</div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-check-circle-fill text-success me-2"></i>Converted into Customers</span>
+            <span class="badge bg-success-subtle text-success fs-6">{{ converted_leads }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-hourglass-split text-primary me-2"></i>Active / In-Progress Leads</span>
+            <span class="badge bg-primary-subtle text-primary fs-6">{{ active_leads }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-x-circle-fill text-danger me-2"></i>Lost / Unqualified Leads</span>
+            <span class="badge bg-danger-subtle text-danger fs-6">{{ lost_leads }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opportunity Outcome Section -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-trophy-fill text-success me-2"></i>Opportunity Win/Loss Outcomes</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="small text-muted text-uppercase fw-semibold">Deal Win Rate</div>
+              <div class="fs-3 fw-bold text-success">{{ opp_win_rate }}%</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 bg-light rounded text-center border">
+              <div class="small text-muted text-uppercase fw-semibold">Won Revenue</div>
+              <div class="fs-3 fw-bold text-success">${{ won_value|floatformat:2 }}</div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-trophy text-success me-2"></i>Closed - Won Deals</span>
+            <span class="badge bg-success fs-6">{{ won_opps }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-x-octagon text-danger me-2"></i>Closed - Lost Deals</span>
+            <span class="badge bg-danger fs-6">{{ lost_opps }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i class="bi bi-arrow-repeat text-primary me-2"></i>Open Pipeline Deals</span>
+            <span class="badge bg-primary fs-6">{{ open_opps }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

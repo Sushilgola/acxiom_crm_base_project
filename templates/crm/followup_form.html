@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AcxiomCRM{% endblock %}
+{% block page_heading %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">{{ title }}</h5>
+        <a href="{% url 'followup_list' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Back to Schedule
+        </a>
+      </div>
+
+      <div class="card-body p-4">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.follow_up_type.id_for_label }}">Activity Type <span class="text-danger">*</span></label>
+              {{ form.follow_up_type }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.subject.id_for_label }}">Subject / Objective <span class="text-danger">*</span></label>
+              {{ form.subject }}
+              <div class="invalid-feedback">Subject is required.</div>
+              {% if form.subject.errors %}<div class="text-danger small">{{ form.subject.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.follow_up_date.id_for_label }}">Follow-up Date <span class="text-danger">*</span></label>
+              {{ form.follow_up_date }}
+              <div class="invalid-feedback">Follow-up date cannot be earlier than today.</div>
+              {% if form.follow_up_date.errors %}<div class="text-danger small">{{ form.follow_up_date.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.follow_up_time.id_for_label }}">Time (Optional)</label>
+              {{ form.follow_up_time }}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.customer.id_for_label }}">Link to Customer</label>
+              {{ form.customer }}
+              <div class="form-text small">Select customer if this is for an existing customer account.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.lead.id_for_label }}">Link to Lead</label>
+              {{ form.lead }}
+              <div class="form-text small">Or select prospective lead if not yet converted.</div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+              {{ form.status }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.assigned_to.id_for_label }}">Assigned Sales Executive</label>
+              {{ form.assigned_to }}
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label" for="{{ form.remarks.id_for_label }}">Agenda / Meeting Notes</label>
+            {{ form.remarks }}
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <a href="{% url 'followup_list' %}" class="btn btn-light border">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-save me-1"></i> Schedule Follow-Up
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

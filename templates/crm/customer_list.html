@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Customers - AcxiomCRM{% endblock %}
+{% block page_heading %}Customer Management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Customers</h4>
+    <p class="text-muted small mb-0">Manage customer accounts, contact details, company information, and relationship history.</p>
+  </div>
+  <div>
+    <a href="{% url 'customer_create' %}" class="btn btn-primary d-inline-flex align-items-center gap-1">
+      <i class="bi bi-person-plus-fill"></i> Add Customer
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filtering (PDF Section 17.13: Customer Name, Email, Phone, Company) -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search_q }}" class="form-control" placeholder="Search by name, email, phone, company, or code...">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+          <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+          <option value="Lead" {% if status_filter == 'Lead' %}selected{% endif %}>Lead</option>
+          <option value="Former" {% if status_filter == 'Former' %}selected{% endif %}>Former</option>
+        </select>
+      </div>
+      {% if request.user.is_admin_role or request.user.is_manager_role %}
+        <div class="col-md-2">
+          <select name="owner" class="form-select">
+            <option value="">All Owners</option>
+            {% for u in sales_users %}
+              <option value="{{ u.id }}" {% if owner_filter == u.id|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="col-md-2 d-flex gap-1 ms-auto">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        <a href="{% url 'customer_list' %}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Customer / Code</th>
+          <th>Contact</th>
+          <th>Company</th>
+          <th>Status</th>
+          <th>Assigned Rep</th>
+          <th>Created</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in page_obj %}
+          <tr>
+            <td>
+              <a href="{% url 'customer_detail' c.id %}" class="fw-bold text-primary text-decoration-none d-block">
+                {{ c.name }}
+              </a>
+              <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.75rem;">{{ c.customer_code }}</span>
+            </td>
+            <td>
+              <div><i class="bi bi-envelope text-muted me-1"></i>{{ c.email }}</div>
+              <div class="small text-muted"><i class="bi bi-telephone text-muted me-1"></i>{{ c.phone }}</div>
+            </td>
+            <td>
+              <div class="fw-medium">{{ c.company_name|default:"-" }}</div>
+              {% if c.city or c.state %}
+                <div class="small text-muted">{{ c.city }}{% if c.city and c.state %}, {% endif %}{{ c.state }}</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.status == 'Active' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+              {% elif c.status == 'Inactive' %}
+                <span class="badge bg-secondary-subtle text-secondary">Inactive</span>
+              {% elif c.status == 'Lead' %}
+                <span class="badge bg-info-subtle text-info border border-info-subtle">Lead</span>
+              {% else %}
+                <span class="badge bg-warning-subtle text-warning">Former</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="small">{{ c.assigned_to.get_full_name|default:c.assigned_to.username|default:"Unassigned" }}</span>
+            </td>
+            <td class="small text-muted">{{ c.created_at|date:"M d, Y" }}</td>
+            <td class="text-end">
+              <div class="btn-group">
+                <a href="{% url 'customer_detail' c.id %}" class="btn btn-sm btn-outline-secondary" title="View Details">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'customer_edit' c.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'customer_delete' c.id %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No customers found. Click "Add Customer" to create one.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+      <span class="small text-muted">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_q }}&status={{ status_filter }}&owner={{ owner_filter }}">Previous</a></li>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_q }}&status={{ status_filter }}&owner={{ owner_filter }}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

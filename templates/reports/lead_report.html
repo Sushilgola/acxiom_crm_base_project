@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Lead Acquisition Report - AcxiomCRM{% endblock %}
+{% block page_heading %}Lead Acquisition & Conversion Report{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Lead Acquisition & Source Report</h4>
+    <p class="text-muted small mb-0">Total leads: {{ total_leads }} &bull; Converted: {{ converted_leads }} ({{ conv_rate }}% conversion rate)</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'report_center' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <a href="?export=csv&status={{ status_filter }}&source={{ source_filter }}&owner={{ owner_filter }}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export to CSV
+    </a>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+      <i class="bi bi-printer me-1"></i> Print
+    </button>
+  </div>
+</div>
+
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All Statuses</option>
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="source" class="form-select form-select-sm">
+          <option value="">All Sources</option>
+          {% for src in sources %}
+            <option value="{{ src }}" {% if source_filter == src %}selected{% endif %}>{{ src }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if request.user.is_admin_role or request.user.is_manager_role %}
+        <div class="col-md-3">
+          <select name="owner" class="form-select form-select-sm">
+            <option value="">All Owners</option>
+            {% for u in sales_users %}
+              <option value="{{ u.id }}" {% if owner_filter == u.id|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="col-md-3 d-flex gap-1 ms-auto">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+        <a href="{% url 'lead_report' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Lead Code</th>
+          <th>Lead Name</th>
+          <th>Company</th>
+          <th>Source</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Expected Value</th>
+          <th>Assigned Rep</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in leads %}
+          <tr>
+            <td class="font-monospace small fw-bold">{{ l.lead_code }}</td>
+            <td class="fw-semibold">{{ l.name }}</td>
+            <td>{{ l.company_name|default:"-" }}</td>
+            <td><span class="badge bg-light text-dark border">{{ l.source }}</span></td>
+            <td>
+              {% if l.status == 'Converted' %}
+                <span class="badge text-white" style="background-color: #8b5cf6;">Converted</span>
+              {% elif l.status == 'Qualified' %}
+                <span class="badge bg-success">Qualified</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ l.status }}</span>
+              {% endif %}
+            </td>
+            <td>{{ l.priority }}</td>
+            <td class="fw-bold">${{ l.expected_value|floatformat:2 }}</td>
+            <td>{{ l.assigned_to.get_full_name|default:l.assigned_to.username|default:"Unassigned" }}</td>
+            <td class="small text-muted">{{ l.created_at|date:"Y-m-d" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">No leads found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

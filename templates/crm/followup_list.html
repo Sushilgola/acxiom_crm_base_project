@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Follow-Up Management - AcxiomCRM{% endblock %}
+{% block page_heading %}Follow-Up Tasks & Reminders{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Follow-Up Schedule</h4>
+    <p class="text-muted small mb-0">Never miss a prospect interaction. Track calls, demos, meetings, and scheduled follow-ups.</p>
+  </div>
+  <div>
+    <a href="{% url 'followup_create' %}" class="btn btn-primary d-inline-flex align-items-center gap-1">
+      <i class="bi bi-calendar-plus"></i> Schedule Follow-Up
+    </a>
+  </div>
+</div>
+
+<!-- Tab Navigation (All, Today, Overdue, Upcoming, Completed) -->
+<ul class="nav nav-pills mb-3 bg-white p-2 rounded-3 border shadow-sm">
+  <li class="nav-item">
+    <a class="nav-link {% if tab == 'all' %}active{% endif %}" href="?tab=all">All Follow-Ups</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab == 'today' %}active{% endif %}" href="?tab=today">
+      Due Today {% if pending_followups_count %}<span class="badge bg-warning text-dark ms-1">{{ pending_followups_count }}</span>{% endif %}
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab == 'overdue' %}active{% endif %}" href="?tab=overdue">
+      Overdue {% if overdue_followups_count %}<span class="badge bg-danger ms-1">{{ overdue_followups_count }}</span>{% endif %}
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab == 'upcoming' %}active{% endif %}" href="?tab=upcoming">Upcoming</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab == 'completed' %}active{% endif %}" href="?tab=completed">Completed</a>
+  </li>
+</ul>
+
+<!-- Filter Bar (PDF Section 17.13: Date, Status, Assigned User, Related Customer/Lead) -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <input type="hidden" name="tab" value="{{ tab }}">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search_q }}" class="form-control" placeholder="Search subject, remarks, contact...">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select name="type" class="form-select">
+          <option value="">All Types</option>
+          {% for t in types %}
+            <option value="{{ t }}" {% if type_filter == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="Planned" {% if status_filter == 'Planned' %}selected{% endif %}>Planned</option>
+          <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+          <option value="Missed" {% if status_filter == 'Missed' %}selected{% endif %}>Missed</option>
+          <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+      {% if request.user.is_admin_role or request.user.is_manager_role %}
+        <div class="col-md-2">
+          <select name="owner" class="form-select">
+            <option value="">All Reps</option>
+            {% for u in sales_users %}
+              <option value="{{ u.id }}" {% if owner_filter == u.id|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="col-md-2 d-flex gap-1 ms-auto">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        <a href="{% url 'followup_list' %}?tab={{ tab }}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Follow-ups Table -->
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Type / Subject</th>
+          <th>Related Contact / Entity</th>
+          <th>Due Date & Time</th>
+          <th>Status</th>
+          <th>Assigned Rep</th>
+          <th>Remarks</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in page_obj %}
+          <tr class="{% if f.is_overdue %}table-danger table-opacity-10{% elif f.is_today %}table-warning table-opacity-10{% endif %}">
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-light text-dark border">
+                  {% if f.follow_up_type == 'Call' %}<i class="bi bi-telephone text-primary me-1"></i>
+                  {% elif f.follow_up_type == 'Meeting' %}<i class="bi bi-camera-video text-success me-1"></i>
+                  {% elif f.follow_up_type == 'Demo' %}<i class="bi bi-display text-info me-1"></i>
+                  {% elif f.follow_up_type == 'Email' %}<i class="bi bi-envelope text-warning me-1"></i>
+                  {% else %}<i class="bi bi-check2-square text-secondary me-1"></i>{% endif %}
+                  {{ f.follow_up_type }}
+                </span>
+                <span class="fw-semibold text-dark">{{ f.subject }}</span>
+              </div>
+            </td>
+            <td>
+              {% if f.customer %}
+                <a href="{% url 'customer_detail' f.customer.id %}" class="fw-medium text-decoration-none">
+                  <i class="bi bi-building me-1 text-primary"></i>{{ f.customer.name }}
+                </a>
+              {% elif f.lead %}
+                <a href="{% url 'lead_detail' f.lead.id %}" class="fw-medium text-decoration-none">
+                  <i class="bi bi-funnel me-1 text-info"></i>{{ f.lead.name }}
+                </a>
+              {% else %}
+                <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="fw-semibold">{{ f.follow_up_date|date:"M d, Y" }}</div>
+              {% if f.follow_up_time %}
+                <div class="small text-muted">{{ f.follow_up_time|time:"g:i A" }}</div>
+              {% endif %}
+            </td>
+            <td>
+              {% if f.status == 'Completed' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Completed</span>
+              {% elif f.is_overdue %}
+                <span class="badge bg-danger text-white"><i class="bi bi-exclamation-triangle-fill me-1"></i>Overdue</span>
+              {% elif f.is_today %}
+                <span class="badge bg-warning text-dark"><i class="bi bi-clock-fill me-1"></i>Due Today</span>
+              {% else %}
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Planned</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="small">{{ f.assigned_to.get_full_name|default:f.assigned_to.username|default:"Unassigned" }}</span>
+            </td>
+            <td>
+              <div class="small text-muted text-truncate" style="max-width: 220px;" title="{{ f.remarks }}">
+                {{ f.remarks|default:"-" }}
+              </div>
+            </td>
+            <td class="text-end">
+              {% if f.status == 'Planned' %}
+                <div class="btn-group">
+                  <a href="{% url 'followup_complete' f.id %}" class="btn btn-sm btn-success py-1" title="Mark Completed">
+                    <i class="bi bi-check-lg"></i> Complete
+                  </a>
+                  <a href="{% url 'followup_reschedule' f.id %}" class="btn btn-sm btn-outline-warning py-1" title="Reschedule Date">
+                    <i class="bi bi-calendar-event"></i>
+                  </a>
+                </div>
+              {% else %}
+                <span class="badge bg-light text-secondary border">Closed</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No follow-ups found in this view.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+      <span class="small text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&tab={{ tab }}&q={{ search_q }}&type={{ type_filter }}&status={{ status_filter }}&owner={{ owner_filter }}">Previous</a></li>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&tab={{ tab }}&q={{ search_q }}&type={{ type_filter }}&status={{ status_filter }}&owner={{ owner_filter }}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

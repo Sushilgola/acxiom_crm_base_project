@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Opportunities - AcxiomCRM{% endblock %}
+{% block page_heading %}Opportunity Management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Sales Opportunities</h4>
+    <p class="text-muted small mb-0">Manage deals in the pipeline, track probabilities, weighted pipeline amounts, and win/loss outcomes.</p>
+  </div>
+  <div>
+    <a href="{% url 'opportunity_create' %}" class="btn btn-primary d-inline-flex align-items-center gap-1">
+      <i class="bi bi-plus-circle-fill"></i> New Opportunity
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filtering (PDF Section 17.13: Opportunity Name, Customer, Stage, Status) -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search_q }}" class="form-control" placeholder="Search opportunity name, customer, code...">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select name="stage" class="form-select">
+          <option value="">All Stages</option>
+          {% for s in stages %}
+            <option value="{{ s }}" {% if stage_filter == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="Open" {% if status_filter == 'Open' %}selected{% endif %}>Open</option>
+          <option value="Won" {% if status_filter == 'Won' %}selected{% endif %}>Won</option>
+          <option value="Lost" {% if status_filter == 'Lost' %}selected{% endif %}>Lost</option>
+        </select>
+      </div>
+      {% if request.user.is_admin_role or request.user.is_manager_role %}
+        <div class="col-md-2">
+          <select name="owner" class="form-select">
+            <option value="">All Reps</option>
+            {% for u in sales_users %}
+              <option value="{{ u.id }}" {% if owner_filter == u.id|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="col-md-2 d-flex gap-1 ms-auto">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        <a href="{% url 'opportunity_list' %}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Opportunities Table -->
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Opportunity / Code</th>
+          <th>Customer</th>
+          <th>Amount</th>
+          <th>Stage</th>
+          <th>Probability</th>
+          <th>Weighted Amount</th>
+          <th>Expected Close</th>
+          <th>Owner</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for opp in page_obj %}
+          <tr>
+            <td>
+              <a href="{% url 'opportunity_detail' opp.id %}" class="fw-bold text-primary text-decoration-none d-block">
+                {{ opp.name }}
+              </a>
+              <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.75rem;">{{ opp.opportunity_code }}</span>
+            </td>
+            <td>
+              <a href="{% url 'customer_detail' opp.customer.id %}" class="text-dark fw-medium text-decoration-none">
+                {{ opp.customer.name }}
+              </a>
+            </td>
+            <td class="fw-bold fs-6">${{ opp.amount|floatformat:2 }}</td>
+            <td>
+              {% if opp.stage == 'Won' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-trophy-fill me-1"></i>Won</span>
+              {% elif opp.stage == 'Lost' %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-x-circle me-1"></i>Lost</span>
+              {% elif opp.stage == 'Negotiation' %}
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Negotiation</span>
+              {% elif opp.stage == 'Proposal' %}
+                <span class="badge bg-info-subtle text-info border border-info-subtle">Proposal</span>
+              {% else %}
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Qualification</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                  <div class="progress-bar {% if opp.probability >= 70 %}bg-success{% elif opp.probability >= 40 %}bg-primary{% else %}bg-secondary{% endif %}" style="width: {{ opp.probability }}%;"></div>
+                </div>
+                <span class="small fw-semibold">{{ opp.probability }}%</span>
+              </div>
+            </td>
+            <td class="text-success fw-bold">${{ opp.weighted_amount|floatformat:2 }}</td>
+            <td class="small text-muted">{{ opp.expected_close_date|date:"M d, Y" }}</td>
+            <td>
+              <span class="small">{{ opp.assigned_to.get_full_name|default:opp.assigned_to.username|default:"Unassigned" }}</span>
+            </td>
+            <td class="text-end">
+              <div class="btn-group">
+                <a href="{% url 'opportunity_detail' opp.id %}" class="btn btn-sm btn-outline-secondary" title="Details">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'opportunity_edit' opp.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'opportunity_delete' opp.id %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">No opportunities found. Click "New Opportunity" to create one.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+      <span class="small text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_q }}&stage={{ stage_filter }}&status={{ status_filter }}&owner={{ owner_filter }}">Previous</a></li>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_q }}&stage={{ stage_filter }}&status={{ status_filter }}&owner={{ owner_filter }}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

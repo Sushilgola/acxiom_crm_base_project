@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporting Center - AcxiomCRM{% endblock %}
+{% block page_heading %}CRM Analytics & Reporting Center{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h4 class="fw-bold mb-1"><i class="bi bi-bar-chart-fill text-primary me-2"></i>CRM Intelligence & Reports</h4>
+  <p class="text-muted small mb-0">Exportable, role-filtered management reports across customers, leads, opportunities, follow-ups, and user activities.</p>
+</div>
+
+<div class="row g-4">
+  <!-- 1. Pipeline Report -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="rounded-3 bg-primary-subtle text-primary p-3 mb-3 d-inline-block" style="width: fit-content;">
+          <i class="bi bi-funnel-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Sales Pipeline Report</h5>
+        <p class="text-muted small flex-grow-1">Stage-wise and owner-wise revenue breakdown, active deal volume, and weighted pipeline values.</p>
+        <a href="{% url 'pipeline_report' %}" class="btn btn-outline-primary btn-sm mt-3 w-100">
+          Open Pipeline Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Conversion Report -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="rounded-3 bg-success-subtle text-success p-3 mb-3 d-inline-block" style="width: fit-content;">
+          <i class="bi bi-trophy-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Conversion & Win/Loss Report</h5>
+        <p class="text-muted small flex-grow-1">Analyze lead conversion ratios, deal win vs loss rates, and closed revenue metrics.</p>
+        <a href="{% url 'conversion_report' %}" class="btn btn-outline-success btn-sm mt-3 w-100">
+          Open Conversion Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Opportunity Report -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="rounded-3 bg-warning-subtle text-warning p-3 mb-3 d-inline-block" style="width: fit-content;">
+          <i class="bi bi-briefcase-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Opportunity Report</h5>
+        <p class="text-muted small flex-grow-1">Comprehensive deal roster filtered by stage, probability, close date, and weighted revenue.</p>
+        <a href="{% url 'opportunity_report' %}" class="btn btn-outline-warning btn-sm mt-3 w-100 text-dark">
+          Open Opportunity Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Lead Report -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="rounded-3 bg-info-subtle text-info p-3 mb-3 d-inline-block" style="width: fit-content;">
+          <i class="bi bi-person-lines-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Lead Acquisition Report</h5>
+        <p class="text-muted small flex-grow-1">Prospect source attribution, conversion rates by channel, lead status distribution, and sales rep assignments.</p>
+        <a href="{% url 'lead_report' %}" class="btn btn-outline-info btn-sm mt-3 w-100">
+          Open Lead Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Customer Report -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="rounded-3 bg-secondary-subtle text-secondary p-3 mb-3 d-inline-block" style="width: fit-content;">
+          <i class="bi bi-people-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Customer Master Report</h5>
+        <p class="text-muted small flex-grow-1">Complete customer directory with contact info, account status, assigned account manager, and creation dates.</p>
+        <a href="{% url 'customer_report' %}" class="btn btn-outline-secondary btn-sm mt-3 w-100">
+          Open Customer Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Follow-Up Task Report -->
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="rounded-3 bg-danger-subtle text-danger p-3 mb-3 d-inline-block" style="width: fit-content;">
+          <i class="bi bi-calendar2-check-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Follow-Up Execution Report</h5>
+        <p class="text-muted small flex-grow-1">Track SLA performance: planned vs completed follow-ups, overdue client tasks, and missed reminders.</p>
+        <a href="{% url 'followup_report' %}" class="btn btn-outline-danger btn-sm mt-3 w-100">
+          Open Follow-Up Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. User Activity Report (Manager / Admin) -->
+  {% if request.user.is_admin_role or request.user.is_manager_role %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow-sm h-100 border-0">
+      <div class="card-body p-4 d-flex flex-column">
+        <div class="rounded-3 bg-dark-subtle text-dark p-3 mb-3 d-inline-block" style="width: fit-content;">
+          <i class="bi bi-speedometer2 fs-3"></i>
+        </div>
+        <h5 class="fw-bold mb-2">Sales Rep Activity Report</h5>
+        <p class="text-muted small flex-grow-1">Management visibility into sales executive action counts, completed calls, deals, and audit operations.</p>
+        <a href="{% url 'user_activity_report' %}" class="btn btn-outline-dark btn-sm mt-3 w-100">
+          Open User Activity Report &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

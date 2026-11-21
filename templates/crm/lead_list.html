@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}Leads Pipeline - AcxiomCRM{% endblock %}
+{% block page_heading %}Lead Management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Leads</h4>
+    <p class="text-muted small mb-0">Track prospect discovery, lead qualification, assignments, and conversion into customer accounts.</p>
+  </div>
+  <div>
+    <a href="{% url 'lead_create' %}" class="btn btn-primary d-inline-flex align-items-center gap-1">
+      <i class="bi bi-person-plus-fill"></i> Capture Lead
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filter Bar (PDF Section 17.13: Lead Name, Company, Status, Assigned User) -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ search_q }}" class="form-control" placeholder="Search lead name, company, email, code...">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="New" {% if status_filter == 'New' %}selected{% endif %}>New</option>
+          <option value="Contacted" {% if status_filter == 'Contacted' %}selected{% endif %}>Contacted</option>
+          <option value="Qualified" {% if status_filter == 'Qualified' %}selected{% endif %}>Qualified</option>
+          <option value="Unqualified" {% if status_filter == 'Unqualified' %}selected{% endif %}>Unqualified</option>
+          <option value="Converted" {% if status_filter == 'Converted' %}selected{% endif %}>Converted</option>
+          <option value="Lost" {% if status_filter == 'Lost' %}selected{% endif %}>Lost</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="priority" class="form-select">
+          <option value="">All Priorities</option>
+          <option value="High" {% if priority_filter == 'High' %}selected{% endif %}>High</option>
+          <option value="Medium" {% if priority_filter == 'Medium' %}selected{% endif %}>Medium</option>
+          <option value="Low" {% if priority_filter == 'Low' %}selected{% endif %}>Low</option>
+        </select>
+      </div>
+      {% if request.user.is_admin_role or request.user.is_manager_role %}
+        <div class="col-md-2">
+          <select name="owner" class="form-select">
+            <option value="">All Reps</option>
+            {% for u in sales_users %}
+              <option value="{{ u.id }}" {% if owner_filter == u.id|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="col-md-2 d-flex gap-1 ms-auto">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        <a href="{% url 'lead_list' %}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Leads Table -->
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Lead / Code</th>
+          <th>Contact</th>
+          <th>Company / Source</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Exp. Value</th>
+          <th>Assigned Rep</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in page_obj %}
+          <tr>
+            <td>
+              <a href="{% url 'lead_detail' l.id %}" class="fw-bold text-primary text-decoration-none d-block">
+                {{ l.name }}
+              </a>
+              <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.75rem;">{{ l.lead_code }}</span>
+            </td>
+            <td>
+              <div>{{ l.email|default:"-" }}</div>
+              <div class="small text-muted">{{ l.phone|default:"-" }}</div>
+            </td>
+            <td>
+              <div class="fw-medium">{{ l.company_name|default:"-" }}</div>
+              <span class="badge bg-light text-secondary border" style="font-size: 0.72rem;">{{ l.source }}</span>
+            </td>
+            <td>
+              {% if l.status == 'New' %}
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">New</span>
+              {% elif l.status == 'Contacted' %}
+                <span class="badge bg-info-subtle text-info border border-info-subtle">Contacted</span>
+              {% elif l.status == 'Qualified' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Qualified</span>
+              {% elif l.status == 'Converted' %}
+                <span class="badge text-white" style="background-color: #8b5cf6;">Converted</span>
+              {% elif l.status == 'Lost' %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Lost</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary">{{ l.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if l.priority == 'High' %}
+                <span class="badge bg-danger text-white">High</span>
+              {% elif l.priority == 'Medium' %}
+                <span class="badge bg-warning text-dark">Medium</span>
+              {% else %}
+                <span class="badge bg-light text-secondary border">Low</span>
+              {% endif %}
+            </td>
+            <td class="fw-semibold">${{ l.expected_value|floatformat:2 }}</td>
+            <td>
+              <span class="small">{{ l.assigned_to.get_full_name|default:l.assigned_to.username|default:"Unassigned" }}</span>
+            </td>
+            <td class="text-end">
+              <div class="btn-group">
+                {% if l.status != 'Converted' %}
+                  <a href="{% url 'lead_convert' l.id %}" class="btn btn-sm btn-outline-success" title="Convert to Customer & Deal">
+                    <i class="bi bi-arrow-repeat"></i> Convert
+                  </a>
+                {% endif %}
+                <a href="{% url 'lead_detail' l.id %}" class="btn btn-sm btn-outline-secondary" title="Details">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'lead_edit' l.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'lead_delete' l.id %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-4 text-muted">No leads found. Click "Capture Lead" to create one.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+      <span class="small text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_q }}&status={{ status_filter }}&priority={{ priority_filter }}&owner={{ owner_filter }}">Previous</a></li>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_q }}&status={{ status_filter }}&priority={{ priority_filter }}&owner={{ owner_filter }}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

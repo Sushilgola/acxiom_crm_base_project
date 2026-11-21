@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - AcxiomCRM{% endblock %}
+{% block page_heading %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">{{ title }}</h5>
+        <a href="{% url 'user_list' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Back to Users
+        </a>
+      </div>
+
+      <div class="card-body p-4">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">First Name</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Last Name</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div class="text-danger small">{{ form.last_name.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Username <span class="text-danger">*</span></label>
+              {{ form.username }}
+              {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email Address <span class="text-danger">*</span></label>
+              {{ form.email }}
+              {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              {{ form.phone }}
+              {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Assigned CRM Role <span class="text-danger">*</span></label>
+              {{ form.role }}
+              {% if form.role.errors %}<div class="text-danger small">{{ form.role.errors.0 }}</div>{% endif %}
+              <div class="form-text small">Admin (all access), Manager (team pipeline & reports), Sales Executive (assigned records).</div>
+            </div>
+          </div>
+
+          {% if form.password %}
+            <div class="mb-3">
+              <label class="form-label">Initial Password <span class="text-danger">*</span></label>
+              {{ form.password }}
+              <div class="form-text small">Minimum 8 characters with letters & numbers/symbols.</div>
+              {% if form.password.errors %}<div class="text-danger small">{{ form.password.errors.0 }}</div>{% endif %}
+            </div>
+          {% endif %}
+
+          <div class="mb-3 form-check">
+            {{ form.is_active }}
+            <label class="form-check-label fw-medium" for="{{ form.is_active.id_for_label }}">Active User Account</label>
+          </div>
+
+          {% if form.is_unlocked %}
+            <div class="mb-4 form-check bg-light p-3 rounded border">
+              {{ form.is_unlocked }}
+              <label class="form-check-label fw-bold text-danger" for="{{ form.is_unlocked.id_for_label }}">
+                Unlock Account (Currently Locked)
+              </label>
+            </div>
+          {% endif %}
+
+          <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <a href="{% url 'user_list' %}" class="btn btn-light border">Cancel</a>
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-save me-1"></i> Save User
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

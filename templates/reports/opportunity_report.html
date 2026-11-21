@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Opportunity Report - AcxiomCRM{% endblock %}
+{% block page_heading %}Sales Opportunity Performance Report{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Opportunity Performance Report</h4>
+    <p class="text-muted small mb-0">Total Deals Value: ${{ total_value|floatformat:2 }} &bull; Weighted Pipeline: ${{ weighted_value|floatformat:2 }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'report_center' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <a href="?export=csv&stage={{ stage_filter }}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export to CSV
+    </a>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+      <i class="bi bi-printer me-1"></i> Print
+    </button>
+  </div>
+</div>
+
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <select name="stage" class="form-select form-select-sm">
+          <option value="">All Pipeline Stages</option>
+          {% for s in stages %}
+            <option value="{{ s }}" {% if stage_filter == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-1 ms-auto">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+        <a href="{% url 'opportunity_report' %}" class="btn btn-sm btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Opportunity Name</th>
+          <th>Customer</th>
+          <th>Deal Amount</th>
+          <th>Stage</th>
+          <th>Win Prob</th>
+          <th>Weighted Amount</th>
+          <th>Expected Close</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in opportunities %}
+          <tr>
+            <td class="font-monospace small fw-bold">{{ o.opportunity_code }}</td>
+            <td class="fw-semibold">{{ o.name }}</td>
+            <td>{{ o.customer.name }}</td>
+            <td class="fw-bold">${{ o.amount|floatformat:2 }}</td>
+            <td><span class="badge bg-light text-dark border">{{ o.stage }}</span></td>
+            <td>{{ o.probability }}%</td>
+            <td class="text-success fw-bold">${{ o.weighted_amount|floatformat:2 }}</td>
+            <td class="small text-muted">{{ o.expected_close_date|date:"Y-m-d" }}</td>
+            <td>{{ o.assigned_to.get_full_name|default:o.assigned_to.username|default:"Unassigned" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">No opportunities found matching filter.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

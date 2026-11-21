@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}User Activity Report - AcxiomCRM{% endblock %}
+{% block page_heading %}Sales Representative & Team Activity{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Sales Team Activity & Effort Report</h4>
+    <p class="text-muted small mb-0">Action breakdown across customer accounts, lead generation, deals, follow-ups, and audit operations.</p>
+  </div>
+  <div>
+    <a href="{% url 'report_center' %}" class="btn btn-outline-secondary btn-sm me-2">
+      <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+      <i class="bi bi-printer me-1"></i> Print
+    </button>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th class="text-center">Customers</th>
+          <th class="text-center">Leads</th>
+          <th class="text-center">Deals</th>
+          <th class="text-center">Follow-ups Total</th>
+          <th class="text-center">Follow-ups Completed</th>
+          <th class="text-center">Activities Logged</th>
+          <th class="text-center">Audit Events</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in user_stats %}
+          <tr>
+            <td>
+              <div class="fw-bold">{{ s.user.get_full_name|default:s.user.username }}</div>
+              <div class="small text-muted">{{ s.user.email }}</div>
+            </td>
+            <td><span class="badge bg-light text-secondary border">{{ s.user.get_role_display_name }}</span></td>
+            <td class="text-center fw-semibold">{{ s.customers }}</td>
+            <td class="text-center fw-semibold">{{ s.leads }}</td>
+            <td class="text-center fw-semibold">{{ s.opportunities }}</td>
+            <td class="text-center">{{ s.followups }}</td>
+            <td class="text-center text-success fw-bold">{{ s.completed_followups }}</td>
+            <td class="text-center text-primary fw-bold">{{ s.activities }}</td>
+            <td class="text-center text-muted">{{ s.audit_events }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">No users found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

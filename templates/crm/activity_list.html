@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity Timeline - AcxiomCRM{% endblock %}
+{% block page_heading %}CRM Activity Logs{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div>
+    <h4 class="fw-bold mb-1">Activity Log</h4>
+    <p class="text-muted small mb-0">Record of all client calls, product demos, meetings, emails, and sales interactions.</p>
+  </div>
+  <div>
+    <a href="{% url 'activity_create' %}" class="btn btn-primary d-inline-flex align-items-center gap-1">
+      <i class="bi bi-plus-circle-fill"></i> Log Activity
+    </a>
+  </div>
+</div>
+
+<!-- Filters (PDF Section 17.13: Activity Type, Date, Status, Assigned User) -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-3">
+        <select name="type" class="form-select">
+          <option value="">All Activity Types</option>
+          {% for t in types %}
+            <option value="{{ t }}" {% if type_filter == t %}selected{% endif %}>{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+          <option value="Planned" {% if status_filter == 'Planned' %}selected{% endif %}>Planned</option>
+          <option value="In-Progress" {% if status_filter == 'In-Progress' %}selected{% endif %}>In-Progress</option>
+        </select>
+      </div>
+      {% if request.user.is_admin_role or request.user.is_manager_role %}
+        <div class="col-md-3">
+          <select name="owner" class="form-select">
+            <option value="">All Team Members</option>
+            {% for u in sales_users %}
+              <option value="{{ u.id }}" {% if owner_filter == u.id|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
+      <div class="col-md-3 d-flex gap-1 ms-auto">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+        <a href="{% url 'activity_list' %}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Activity Timeline List -->
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="list-group list-group-flush">
+      {% for act in page_obj %}
+        <div class="list-group-item p-3">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-light text-dark border p-2">
+                {% if act.activity_type == 'Call' %}<i class="bi bi-telephone-fill text-primary fs-6"></i>
+                {% elif act.activity_type == 'Meeting' %}<i class="bi bi-camera-video-fill text-success fs-6"></i>
+                {% elif act.activity_type == 'Email' %}<i class="bi bi-envelope-fill text-info fs-6"></i>
+                {% else %}<i class="bi bi-check2-square text-secondary fs-6"></i>{% endif %}
+              </span>
+              <div>
+                <h6 class="mb-0 fw-bold text-dark">{{ act.subject }}</h6>
+                <div class="small text-muted">
+                  Type: <strong>{{ act.activity_type }}</strong> &bull;
+                  Date: {{ act.activity_date|date:"F d, Y g:i A" }} &bull;
+                  Rep: <strong>{{ act.assigned_to.get_full_name|default:act.assigned_to.username }}</strong>
+                </div>
+              </div>
+            </div>
+            <div>
+              {% if act.status == 'Completed' %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Completed</span>
+              {% else %}
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ act.status }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if act.description %}
+            <p class="mb-2 text-secondary small bg-light p-2 rounded border">{{ act.description }}</p>
+          {% endif %}
+
+          <div class="small text-muted">
+            {% if act.customer %}
+              <span class="me-3"><i class="bi bi-building me-1 text-primary"></i>Customer: <a href="{% url 'customer_detail' act.customer.id %}" class="text-decoration-none fw-medium">{{ act.customer.name }}</a></span>
+            {% endif %}
+            {% if act.lead %}
+              <span><i class="bi bi-funnel me-1 text-info"></i>Lead: <a href="{% url 'lead_detail' act.lead.id %}" class="text-decoration-none fw-medium">{{ act.lead.name }}</a></span>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-journal-x fs-1 text-secondary mb-2 d-block"></i>
+          No activities found. Click "Log Activity" to add one.
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+      <span class="small text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&type={{ type_filter }}&status={{ status_filter }}&owner={{ owner_filter }}">Previous</a></li>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&type={{ type_filter }}&status={{ status_filter }}&owner={{ owner_filter }}">Next</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

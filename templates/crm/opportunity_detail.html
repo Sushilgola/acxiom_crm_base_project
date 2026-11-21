@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ opportunity.name }} - Opportunity Details - AcxiomCRM{% endblock %}
+{% block page_heading %}Deal: {{ opportunity.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+  <div class="d-flex align-items-center gap-3">
+    <div class="rounded-circle bg-primary-subtle text-primary p-3 fs-3 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+      <i class="bi bi-briefcase"></i>
+    </div>
+    <div>
+      <h4 class="fw-bold mb-0">{{ opportunity.name }}</h4>
+      <div class="d-flex align-items-center gap-2 mt-1">
+        <span class="badge bg-light text-secondary border font-monospace">{{ opportunity.opportunity_code }}</span>
+        <span class="badge {% if opportunity.stage == 'Won' %}bg-success{% elif opportunity.stage == 'Lost' %}bg-danger{% else %}bg-primary{% endif %}">
+          {{ opportunity.stage }}
+        </span>
+        <span class="text-muted small">&bull; Customer: <a href="{% url 'customer_detail' opportunity.customer.id %}" class="fw-medium text-decoration-none">{{ opportunity.customer.name }}</a></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <a href="{% url 'followup_create' %}?customer={{ opportunity.customer.id }}" class="btn btn-sm btn-outline-primary">
+      <i class="bi bi-calendar-plus me-1"></i> Follow-Up
+    </a>
+    <a href="{% url 'opportunity_edit' opportunity.id %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-pencil me-1"></i> Edit
+    </a>
+    <a href="{% url 'opportunity_delete' opportunity.id %}" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-trash"></i>
+    </a>
+  </div>
+</div>
+
+<!-- Opportunity Pipeline Progress Tracker -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <span class="small fw-bold text-uppercase text-muted">Pipeline Stage Progress</span>
+      <span class="fw-bold text-dark">Stage: {{ opportunity.stage }} ({{ opportunity.probability }}% Probability)</span>
+    </div>
+    <div class="progress" style="height: 10px;">
+      <div class="progress-bar {% if opportunity.stage == 'Won' %}bg-success{% elif opportunity.stage == 'Lost' %}bg-danger{% else %}bg-primary{% endif %}" style="width: {{ opportunity.probability }}%;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-currency-dollar me-2 text-success"></i>Deal Financials & Overview</h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="text-muted small">Total Deal Amount</label>
+          <div class="fs-4 fw-bold text-dark">${{ opportunity.amount|floatformat:2 }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="text-muted small">Weighted Pipeline Value (Amount &times; Prob / 100)</label>
+          <div class="fs-5 fw-bold text-success">${{ opportunity.weighted_amount|floatformat:2 }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="text-muted small">Expected Close Date</label>
+          <div class="fw-semibold">{{ opportunity.expected_close_date|date:"F d, Y" }}</div>
+        </div>
+        <div class="mb-3">
+          <label class="text-muted small">Deal Owner</label>
+          <div class="fw-semibold">{{ opportunity.assigned_to.get_full_name|default:opportunity.assigned_to.username|default:"Unassigned" }}</div>
+        </div>
+        {% if opportunity.source %}
+          <div class="mb-3">
+            <label class="text-muted small">Lead / Deal Source</label>
+            <div>{{ opportunity.source }}</div>
+          </div>
+        {% endif %}
+        {% if opportunity.notes %}
+          <div class="p-2 bg-light rounded small border">
+            <label class="fw-bold text-secondary mb-1">Notes:</label>
+            <p class="mb-0 text-muted">{{ opportunity.notes }}</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white p-2">
+        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+          <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#oppFollowupsTab" type="button">
+              <i class="bi bi-calendar2-check me-1"></i> Follow-Ups ({{ followups.count }})
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#oppAuditTab" type="button">
+              <i class="bi bi-shield-shaded me-1"></i> Audit Trail ({{ audit_logs.count }})
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body p-3">
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="oppFollowupsTab">
+            <div class="list-group list-group-flush">
+              {% for f in followups %}
+                <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-0">
+                  <div>
+                    <span class="badge {% if f.status == 'Completed' %}bg-success{% elif f.is_overdue %}bg-danger{% else %}bg-primary{% endif %} me-1">{{ f.status }}</span>
+                    <span class="fw-semibold">{{ f.subject }}</span>
+                    <div class="small text-muted">{{ f.follow_up_date|date:"M d, Y" }} &bull; {{ f.follow_up_type }}</div>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="text-center py-4 text-muted">No follow-ups specifically linked to this opportunity.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="oppAuditTab">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle font-monospace" style="font-size: 0.82rem;">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for log in audit_logs %}
+                    <tr>
+                      <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+                      <td>{{ log.user_email }}</td>
+                      <td><span class="badge bg-light text-dark border">{{ log.action }}</span></td>
+                      <td>{{ log.details }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr>
+                      <td colspan="4" class="text-center py-3 text-muted">No audit events recorded.</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
